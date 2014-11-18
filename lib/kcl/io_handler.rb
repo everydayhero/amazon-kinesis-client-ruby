@@ -4,7 +4,7 @@ module Kcl
   class IOHandler
     def initialize input, output, error
       @input = input
-      @output = ouput
+      @output = output
       @error = error
     end
 

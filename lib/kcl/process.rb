@@ -1,20 +1,22 @@
 module Kcl
   class Process
     def initialize record_processor,
-                   input: $stdin.fileno,
-                   output: $stdout.fileno,
-                   error: $stderr.fileno
+                   input: $stdin,
+                   output: $stdout,
+                   error: $stderr
       @record_processor = record_processor
       @io_handler = IOHandler.new input, output, error
       @checkpointer = Checkpointer.new @io_handler
     end
 
     def run
-      begin
+      loop do
         action = io_handler.read_action
         perform action
         report_done action
-      end while action
+
+        break if action.nil?
+      end
     end
 
     private
@@ -31,7 +33,7 @@ module Kcl
     end
 
     def report_done action
-      io_handler.write_action actoin: 'status', responseFor: action['action']
+      io_handler.write_action action: 'status', responseFor: action['action']
     end
   end
 end

@@ -7,11 +7,11 @@ module Kcl
     def checkpoint sequence_number = nil
       io_handler.write_action action: 'checkpoint', checkpoint: sequence_number
 
-      action = get_action
+      action = fetch_action
       if action['action'] == 'checkpoint'
-        raise CheckpointError.new action['error'] unless action['error'].nil?
+        fail CheckpointError, action['error'] unless action['error'].nil?
       else
-        raise CheckpointError.new 'InvalidStateException'
+        fail CheckpointError, 'InvalidStateException'
       end
     end
 
@@ -19,14 +19,15 @@ module Kcl
 
     attr_reader :io_handler
 
-    def get_action
-      begin
-        action = fetch_action
-      end while action.nil?
-      action
+    def fetch_action
+      loop do
+        action = read_action
+
+        return action unless action.nil?
+      end
     end
 
-    def fetch_action
+    def read_action
       io_handler.read_action
     rescue IOHandler::ReadError => read_error
       io_handler.write_error \

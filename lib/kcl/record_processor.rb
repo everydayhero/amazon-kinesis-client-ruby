@@ -1,16 +1,10 @@
 module Kcl
   module RecordProcessor
-    def init
-      raise NotImplementedError
-    end
+    def init _shared_id; end
 
-    def process_records
-      raise NotImplementedError
-    end
+    def process_records _records, _checkpointer; end
 
-    def shutdown
-      raise NotImplementedError
-    end
+    def shutdown _checkpointer, _reason; end
 
     def run
       Process.new(self).run

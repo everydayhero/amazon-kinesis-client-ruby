@@ -6,6 +6,7 @@ module Kcl
       @io_handler = io_handler
     end
 
+    # rubocop:disable Style/MethodLength
     def handle action
       case action.fetch('action')
       when 'initialize'
@@ -15,15 +16,16 @@ module Kcl
       when 'shutdown'
         record_processor.shutdown checkpointer, action.fetch('reason')
       else
-        raise MalformedActionError,
-          "Received an action which couldn't be understood. Action was #{action}"
+        fail MalformedActionError,
+             "Received an action which couldn't be understood. Action was #{action}"
       end
     rescue KeyError => key_error
       raise MalformedActionError,
-        "Action #{action} was expected to have key: #{key_error.message}"
+            "Action #{action} was expected to have key: #{key_error.message}"
     rescue => error
       io_handler.write_error error.backtrace.join "\n"
     end
+    # rubocop:enable Style/MethodLength
 
     private
 

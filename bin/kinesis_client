@@ -2,4 +2,4 @@
 
 require 'kcl'
 
-puts Kcl::ExecutorCommandBuilder.new.build
+Kcl::ExecutorCommandBuilder.new.build

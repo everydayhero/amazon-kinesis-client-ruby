@@ -8,13 +8,13 @@ module Kcl
 
     def java
       command = ENV.fetch('PATH_TO_JAVA', `which java`).strip
-      raise 'Missing JAVA PATH' if command.nil? || command.empty?
+      fail 'Missing JAVA PATH' if command.nil? || command.empty?
 
       command
     end
 
     def client_class
-      "com.amazonaws.services.kinesis.multilang.MultiLangDaemon"
+      'com.amazonaws.services.kinesis.multilang.MultiLangDaemon'
     end
 
     def class_path
@@ -24,7 +24,7 @@ module Kcl
     end
 
     def properties_file
-      File.expand_path '../../kcl.rb', __FILE__
+      File.expand_path '../../default.properties', __FILE__
     end
   end
 end

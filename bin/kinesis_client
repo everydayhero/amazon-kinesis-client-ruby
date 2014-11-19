@@ -2,4 +2,21 @@
 
 require 'kcl'
 
-Kcl::ExecutorCommandBuilder.new.build
+# puts Kcl::Configuration.new(
+#   max_records: 5,
+#   idle_time_between_reads_in_millis: 500
+# ).to_properties
+#p Kcl::ExecutorCommandBuilder.new('/Users/soloman.weng/tmp/amazon-kpl-demo/sample.properties').build
+
+#Kcl::Executor.configuration
+
+Kcl::Executor.new do |executor|
+  executor.config max_records: 5,
+                  idle_time_between_reads_in_millis: 500
+
+  executor.record_processor do
+    Object.new
+  end
+end
+
+Kcl::Executor.run # ARGV

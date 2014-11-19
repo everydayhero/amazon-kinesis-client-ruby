@@ -39,13 +39,7 @@ module Kcl
     attr_reader :record_processor_callback, :configuration
 
     def run_exec
-      config_properties_file = Tempfile.new ['config', '.properties']
-      config_properties_file.write configuration.to_properties
-
-      LOG.info "properties path: #{config_properties_file.path}"
-      LOG.info "properties:\n#{config_properties_file.read}"
-
-      command = ExecutorCommandBuilder.new(config_properties_file.path).build
+      command = ExecutorCommandBuilder.new(config_properties_path).build
       LOG.info "execute command:\n#{command}"
 
       system command
@@ -55,6 +49,16 @@ module Kcl
       processor_instance = record_processor_callback.call
 
       processor_instance.run
+    end
+
+    def config_properties_path
+      config_properties_file = Tempfile.new ['config', '.properties']
+      config_properties_file.write configuration.to_properties
+      config_properties_file.close
+      LOG.info "properties path: #{config_properties_file.path}"
+      LOG.info "properties:\n#{File.read config_properties_file.path}"
+
+      config_properties_file.path
     end
 
     class << self

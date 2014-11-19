@@ -73,7 +73,7 @@ module Kcl
       end
     end
 
-    # rubocop:disable Style/MethodLength,Style/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity
     def try_checkpoint checkpointer, sequence_number, try_count
       seq = sequence_number.to_s if sequence_number
       checkpointer.checkpoint seq
@@ -100,6 +100,6 @@ module Kcl
         false
       end
     end
-    # rubocop:enable Style/MethodLength,Style/CyclomaticComplexity
+    # rubocop:enable Metrics/MethodLength,Metrics/CyclomaticComplexity
   end
 end

@@ -66,6 +66,8 @@ module Kcl
       attr_accessor :current_executor
 
       def run argv = ARGV
+        fail 'Executor not configured' unless current_executor
+
         current_executor.run argv
       end
     end

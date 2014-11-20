@@ -104,7 +104,6 @@ Please ensure the following configuration value is specified:
 - **application_name** : it is not required if the environment variable **APP_NAME** is set.
 
 
-
 Record Processors
 -----------------
 
@@ -210,3 +209,18 @@ rake install
 ```bash
 rake spec
 ```
+
+
+Future Roadmap
+--------------
+- dependency management for the Amazon kinesis client jar files by utilising [ruby-maven](https://github.com/mkristian/ruby-maven) (potentially).
+
+
+Contributing
+------------
+
+1. Fork it
+2. Create your feature branch (git checkout -b my-new-feature)
+3. Commit your changes (git commit -am 'Add some feature')
+4. Push to the branch (git push origin my-new-feature)
+5. Create new Pull Request

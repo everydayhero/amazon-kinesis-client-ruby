@@ -36,11 +36,10 @@ module Kcl
     end
 
     def executable_name
-      root_caller_pattern = /\A(?<file>.+)\:\d+\:in.*<main>.*\Z/
-      process_trace = caller.find { |trace| trace =~ root_caller_pattern }
+      caller.each do |trace|
+        matched = trace.match(/\A(?<file>.+)\:\d+\:in.*<main>.*\Z/)
 
-      if process_trace
-        File.expand_path process_trace.match(root_caller_pattern)[:file]
+        return matched[:file] if matched
       end
     end
 

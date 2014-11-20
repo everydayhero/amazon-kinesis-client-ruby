@@ -6,7 +6,7 @@ module Kcl
       @io_handler = io_handler
     end
 
-    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
     def handle action
       case action.fetch('action')
       when 'initialize'
@@ -25,7 +25,7 @@ module Kcl
     rescue => error
       io_handler.write_error error.backtrace.join "\n"
     end
-    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/MethodLength,Metrics/AbcSize
 
     private
 

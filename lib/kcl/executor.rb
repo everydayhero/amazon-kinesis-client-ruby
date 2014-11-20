@@ -17,13 +17,14 @@ module Kcl
     end
 
     def record_processor record_processor = nil
-      @record_processor_callback = if record_processor
-        Proc.new { record_processor }
-      elsif block_given?
-        Proc.new
-      else
-        fail ArgumentError, 'RecordProcessor required'
-      end
+      @record_processor_callback =
+        if record_processor
+          proc { record_processor }
+        elsif block_given?
+          Proc.new
+        else
+          fail ArgumentError, 'RecordProcessor required'
+        end
     end
 
     def run argv
@@ -42,7 +43,7 @@ module Kcl
       command = ExecutorCommandBuilder.new(config_properties_path).build
       LOG.info "execute command:\n#{command.join ' '}"
 
-      system *command
+      system(*command)
     end
 
     def run_record_processor

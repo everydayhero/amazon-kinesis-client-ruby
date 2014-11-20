@@ -36,7 +36,12 @@ module Kcl
     end
 
     def executable_name
-      __FILE__
+      root_caller_pattern = /\A(?<file>.+)\:\d+\:in.*<main>.*\Z/
+      process_trace = caller.find { |trace| trace =~ root_caller_pattern }
+
+      if process_trace
+        File.expand_path process_trace.match(root_caller_pattern)[:file]
+      end
     end
 
     def default_key_map

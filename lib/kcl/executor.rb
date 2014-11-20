@@ -40,9 +40,9 @@ module Kcl
 
     def run_exec
       command = ExecutorCommandBuilder.new(config_properties_path).build
-      LOG.info "execute command:\n#{command}"
+      LOG.info "execute command:\n#{command.join ' '}"
 
-      system command
+      system *command
     end
 
     def run_record_processor

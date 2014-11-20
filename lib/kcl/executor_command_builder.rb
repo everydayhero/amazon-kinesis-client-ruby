@@ -5,7 +5,7 @@ module Kcl
     end
 
     def build
-      "#{java} -cp #{class_path} #{client_class} #{properties_file}"
+      [java, '-cp', class_path, client_class, properties_file]
     end
 
     private

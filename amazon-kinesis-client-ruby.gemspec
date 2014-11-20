@@ -6,8 +6,8 @@ require 'kcl/version'
 Gem::Specification.new do |spec|
   spec.name          = 'amazon-kinesis-client-ruby'
   spec.version       = Kcl::VERSION
-  spec.authors       = ['soloman']
-  spec.email         = ['soloman1124@gmail.com']
+  spec.authors       = ['Soloman Weng']
+  spec.email         = ['solomanw@everydayhero.com.au']
   spec.summary       = 'Amazon Kinesis Client Library for Ruby'
   spec.description   = 'Amazon Kinesis Client Library for Ruby'
   spec.homepage      = ''

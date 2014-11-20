@@ -1,90 +1,212 @@
-amazon-kinesis-client-ruby
-==========================
+Amazon Kinesis Client Library for Ruby
+======================================
 
-Amazon Kinesis Client for Ruby
+This gem provides an interface to the KCL MultiLangDaemon, which is part of the [Amazon Kinesis Client Library](https://github.com/awslabs/amazon-kinesis-client). This interface manages the interaction with the MultiLangDaemon so that developers can focus on implementing their record processor executable. A record processor executable typically looks something like:
+
+```ruby
+class SimpleProcessor
+  include RecordProcessor
+
+  def process_records records, checkpointer
+    # process records and checkpoint
+  end
+end
+```
+
+Note, the initial implementation of this gem is largely based on the reference [python implementation](https://github.com/awslabs/amazon-kinesis-client-python) provided by Amazon.
+
+
+Environment Setup
+-----------------
+
+Please ensure the following environment requirements are reviewed before using the gem:
+- make sure that your environment is configured to allow the Amazon Kinesis Client Library to use your [AWS Security Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html). By default the *DefaultAWSCredentialsProviderChain* is configured so you'll want to make your credentials available to one of the credentials providers in that provider chain. There are several ways to do this such as providing a ~/.aws/credentials file, or specifying the *AWS_ACCESS_KEY_ID* and
+*AWS_SECRET_ACCESS_KEY* environment variables.
+- ensure **JAVA** is available in the environment. This gem works by invoking the packaged *amazon-kinesis-client.jar* and which subsequently executes the target ruby record processor, therefore a compatible JVM/JDK is therefore required.
+
+
+Environment Variables
+---------------------
+- **AWS_ACCESS_KEY_ID** : AWS credential for accessing the target kinesis queue
+- **AWS_SECRET_ACCESS_KEY** : AWS credential for accessing the target kinesis queue
+- **APP_NAME** : Used by the KCL as the name of this application. It is used as the DynamoDB table name created by KCL to store checkpoints.
+- **PATH_TO_JAVA** : (optional) custom java executable path (by default `which java` is used).
+
+
+Example Consumer Client Setup
+-----------------------------
+
+Firstly please create the ruby script to run your kinesis consumer with structure similar to the following:
+
+```ruby
+# FILE_NAME: run_simple_kinesis_client.rb
+
+require 'kcl'
+
+# define a record processor
+class SimpleProcessor < Kcl::AdvancedRecordProcessor
+  def process_record data
+    p data
+  end
+end
+
+# config the executor
+Kcl::Executor.new do |executor|
+  executor.config stream_name: 'data-kinesis-queue',
+                  application_name: 'RubyKCLSample',
+                  max_records: 5,
+                  idle_time_between_reads_in_millis: 500
+
+  # setup the target record processor
+  executor.record_processor do
+    SimpleProcessor.new
+  end
+end
+
+# execute and run
+Kcl::Executor.run
+```
+
+The most essential part of the is the `Kcl::Executor.run` bit, it is required in the script that you want the consumer client to run. The configuration (i.e. `Kcl::Executor.new` bit) and record processor class (i.e. `SimpleProcessor`) can be put in other suitable places.
+
+Next, run the script with an additional argument `exec`, e.g. `ruby run_simple_kinesis_client.rb exec`. Please note, it will **not** work without the `exec` argument, because the script is intent to be invoked by the amazon-kinesis-client java process. Specifying `exec` actually triggers the java consumer process.
+
+The following shows an example of how the consumer worker can be specified in the Procfile:
+
+```bash
+worker: bundle exec <your_consumer_client_script> exec
+```
+
+
+Configurations
+--------------
+
+The properties required by the MultiLangDaemon (please refer to [**this**](https://github.com/awslabs/amazon-kinesis-client-python/blob/master/samples/sample.properties)) can be configured through the `executor.config`. That is:
+
+
+```ruby
+Kcl::Executor.new do |executor|
+  executor.config stream_name: 'data-kinesis-queue',
+                  application_name: 'RubyKCLSample',
+                  max_records: 5,
+                  idle_time_between_reads_in_millis: 500,
+                  region_name: 'us-east-1',
+                  initial_position_in_stream: 'TRIM_HORIZON'
+
+  #.....
+end
+```
+
+Under the hood, the Kcl gem will translate it to the proper java properties file for the java process. Please try use underscore key name (i.e. `stream_name` for `streamName`), so it follows good ruby convention.
+
+Please ensure the following configuration value is specified:
+- **stream_name** : the target kinesis queue name
+- **application_name** : it is not required if the environment variable **APP_NAME** is set.
+
+
+
+Record Processors
+-----------------
+
+It is also required to specify the record processor for the `Kcl::Executor`, i.e.
+
+```ruby
+Kcl::Executor.new do |executor|
+  #.......
+  executor.record_processor do
+    YourProcessor.new
+  end
+end
+```
+
+The reason that why `SimpleProcessor.new` is initialised in the block instead of:
+
+```ruby
+executor.record_processor SimpleProcessor.new
+```
+
+is the processor should only get instantiated when invoked by the consumer client java process, and not in the first `<client_script> exec` call.
+
+
+### Kcl::RecordProcessor
+
+The RecordProcessor module offers the most basic interface to implement a record processor. The following shows a simple example:
+
+```ruby
+require 'kcl'
+
+class YourProcessor
+  include Kcl::RecordProcessor
+
+  def init shared_id
+    # Called once by a KCLProcess before any calls to process_records
+  end
+
+  def process_records records, checkpointer
+    # Called by a KCLProcess with a list of records to be processed and a
+    # checkpointer which accepts sequence numbers from the records to indicate
+    # where in the stream to checkpoint.
+  end
+
+  def shutdown checkpointer, reason
+    #Called by a KCLProcess instance to indicate that this record processor
+    # should shutdown. After this is called, there will be no more calls to
+    # any other methods of this record processor.
+  end
+end
+```
+
+Please note, with the basic `Kcl::RecordProcessor`, it is the clients' responsibility to manage the checkpoints. The client are free to decide how often the checkpoint should be made through doing:
+
+```ruby
+def process_records records, checkpointer
+  checkpointer.checkpoint records.last['sequenceNumber']
+end
+```
+
+### Kcl::AdvancedRecordProcessor
+
+The AdvancedRecordProcessor class take cares the basic checkpoints logic, and the clients only required to implement the `process_record` method, for example:
+
+```ruby
+require 'kcl'
+
+class YourProcessor < Kcl::AdvancedRecordProcessor
+  def initialize
+    super sleep_seconds: 10, # default to 5
+          checkpoint_retries: 10, # default to 5
+          checkpoint_freq_seconds: 30 # default to 60
+  end
+
+  def process_record record
+    data = record[:data]
+    partition_key = record[:partition_key]
+    sequence_number = record[:sequence_number]
+
+    # do something with data
+  end
+end
 
 ```
-# The script that abides by the multi-language protocol. This script will
-# be executed by the MultiLangDaemon, which will communicate with this script
-# over STDIN and STDOUT according to the multi-language protocol.
-executableName = sample_kclruby_app.rb
 
-# The name of an Amazon Kinesis stream to process.
-streamName = stream
 
-# Used by the KCL as the name of this application. Will be used as the name
-# of an Amazon DynamoDB table which will store the lease and checkpoint
-# information for workers with this application name
-applicationName = RubyKCLSample
+Downloading
+-----------
+install stable releases with the following command:
 
-# Users can change the credentials provider the KCL will use to retrieve credentials.
-# The DefaultAWSCredentialsProviderChain checks several other providers, which is
-# described here:
-# http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html
-AWSCredentialsProvider = DefaultAWSCredentialsProviderChain
+```bash
+gem install amazon-kinesis-client-ruby
+```
 
-# Appended to the user agent of the KCL. Does not impact the functionality of the
-# KCL in any other way.
-processingLanguage = ruby/2.1.2
+The development version (hosted on Github) can be installed with:
 
-# Valid options at TRIM_HORIZON or LATEST.
-# See http://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetShardIterator.html#API_GetShardIterator_RequestSyntax
-initialPositionInStream = TRIM_HORIZON
+```bash
+git clone git@github.com:everydayhero/amazon-kinesis-client-ruby.git
+cd amazon-kinesis-client-ruby
+rake install
+```
 
-# The following properties are also available for configuring the KCL Worker that is created
-# by the MultiLangDaemon.
-
-# The KCL defaults to us-east-1
-#regionName = us-east-1
-
-# Fail over time in milliseconds. A worker which does not renew it's lease within this time interval
-# will be regarded as having problems and it's shards will be assigned to other workers.
-# For applications that have a large number of shards, this msy be set to a higher number to reduce
-# the number of DynamoDB IOPS required for tracking leases
-#failoverTimeMillis = 10000
-
-# A worker id that uniquely identifies this worker among all workers using the same applicationName
-# If this isn't provided a MultiLangDaemon instance will assign a unique workerId to itself.
-#workerId =
-
-# Shard sync interval in milliseconds - e.g. wait for this long between shard sync tasks.
-#shardSyncIntervalMillis = 60000
-
-# Max records to fetch from Kinesis in a single GetRecords call.
-#maxRecords = 10000
-
-# Idle time between record reads in milliseconds.
-#idleTimeBetweenReadsInMillis = 1000
-
-# Enables applications flush/checkpoint (if they have some data "in progress", but don't get new data for while)
-#callProcessRecordsEvenForEmptyRecordList = false
-
-# Interval in milliseconds between polling to check for parent shard completion.
-# Polling frequently will take up more DynamoDB IOPS (when there are leases for shards waiting on
-# completion of parent shards).
-#parentShardPollIntervalMillis = 10000
-
-# Cleanup leases upon shards completion (don't wait until they expire in Kinesis).
-# Keeping leases takes some tracking/resources (e.g. they need to be renewed, assigned), so by default we try
-# to delete the ones we don't need any longer.
-#cleanupLeasesUponShardCompletion = true
-
-# Backoff time in milliseconds for Amazon Kinesis Client Library tasks (in the event of failures).
-#taskBackoffTimeMillis = 500
-
-# Buffer metrics for at most this long before publishing to CloudWatch.
-#metricsBufferTimeMillis = 10000
-
-# Buffer at most this many metrics before publishing to CloudWatch.
-#metricsMaxQueueSize = 10000
-
-# KCL will validate client provided sequence numbers with a call to Amazon Kinesis before checkpointing for calls
-# to RecordProcessorCheckpointer#checkpoint(String) by default.
-#validateSequenceNumberBeforeCheckpointing = true
-
-# The maximum number of active threads for the MultiLangDaemon to permit.
-# If a value is provided then a FixedThreadPool is used with the maximum
-# active threads set to the provided value. If a non-positive integer or no
-# value is provided a CachedThreadPool is used.
-#maxActiveThreads = 0
+###Run Tests
+```bash
+rake spec
 ```

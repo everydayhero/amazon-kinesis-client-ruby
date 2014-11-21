@@ -1,0 +1,26 @@
+AllCops:
+  Include:
+    - '**/Rakefile'
+    - '**/*.gemspec'
+
+Style/Documentation:
+  Enabled: false
+
+Style/Blocks:
+  Enabled: true
+  Exclude:
+    - spec/**/*_spec.rb
+
+Style/WordArray:
+  Enabled: true
+  Exclude:
+    - spec/**/*_spec.rb
+
+Style/Encoding:
+  Enabled: false
+
+Style/MethodDefParentheses:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120

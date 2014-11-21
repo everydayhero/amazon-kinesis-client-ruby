@@ -18,7 +18,7 @@ module Kcl
     private
 
     def check_config
-      default_config.keys.each do |required_key|
+      required_propertie_keys.each do |required_key|
         fail "#{required_key} is required" unless to_h[required_key].present?
       end
     end
@@ -51,6 +51,10 @@ module Kcl
         aws_credentials_provider: 'DefaultAWSCredentialsProviderChain',
         initial_position_in_stream: 'TRIM_HORIZON'
       }
+    end
+
+    def required_propertie_keys
+      default_config.keys.concat [:stream_name]
     end
 
     def default_key_map

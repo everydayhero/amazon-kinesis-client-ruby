@@ -4,7 +4,14 @@ describe Kcl::Configuration do
   describe '#to_properties' do
     let(:config) { Kcl::Configuration.new config_options }
 
-    let(:config_options) { { application_name: 'MyApp' } }
+    let(:required_options) {
+      {
+        application_name: 'MyApp',
+        stream_name: 'MyStream'
+      }
+    }
+
+    let(:config_options) { required_options }
 
     let(:default_properties) {
       %w(
@@ -24,10 +31,9 @@ describe Kcl::Configuration do
     context 'When ruby style config key is set' do
       let(:config_options) {
         {
-          application_name: 'MyApp',
           dummy_key: 1,
           dummy_key_two: 'two'
-        }
+        }.merge required_options
       }
 
       it { is_expected.to include "dummyKey=1\ndummyKeyTwo=two" }
@@ -36,9 +42,8 @@ describe Kcl::Configuration do
     context 'When aws_credentials_provider is set' do
       let(:config_options) {
         {
-          application_name: 'MyApp',
           aws_credentials_provider: 'Test'
-        }
+        }.merge required_options
       }
 
       it { is_expected.to include 'AWSCredentialsProvider=Test' }
@@ -47,14 +52,14 @@ describe Kcl::Configuration do
     context 'When APP_NAME environment vairlable is set' do
       before { ENV['APP_NAME'] = 'Test App' }
 
-      let(:config_options) { Hash.new }
+      let(:config_options) { { stream_name: 'MyStream' } }
 
       it { is_expected.to include 'applicationName=Test App' }
     end
 
     %w(
       executable_name application_name processing_language
-      aws_credentials_provider initial_position_in_stream
+      aws_credentials_provider initial_position_in_stream stream_name
     ).each do |key_prop|
       context "When missing required property #{key_prop}" do
         let(:config_options) { { key_prop => nil } }

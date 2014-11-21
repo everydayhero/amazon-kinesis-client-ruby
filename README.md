@@ -67,7 +67,7 @@ end
 Kcl::Executor.run
 ```
 
-The most essential part of the is the `Kcl::Executor.run` bit, it is required in the script that you want the consumer client to run. The configuration (i.e. `Kcl::Executor.new` bit) and record processor class (i.e. `SimpleProcessor`) can be put in other suitable places.
+The most essential part of this is the `Kcl::Executor.run` bit, which is required in the script that you want the consumer client to run. The configuration (i.e. `Kcl::Executor.new` bit) and record processor class (i.e. `SimpleProcessor`) can be put in other suitable places.
 
 Next, run the script with an additional argument `exec`, e.g. `ruby run_simple_kinesis_client.rb exec`. Please note, it will **not** work without the `exec` argument, because the script is intent to be invoked by the amazon-kinesis-client java process. Specifying `exec` actually triggers the java consumer process.
 
@@ -97,9 +97,9 @@ Kcl::Executor.new do |executor|
 end
 ```
 
-Under the hood, the Kcl gem will translate it to the proper java properties file for the java process. Please try use underscore key name (i.e. `stream_name` for `streamName`), so it follows good ruby convention.
+Under the hood, the Kcl gem will translate it to the proper java properties file for the java process. Please try to use underscore key name (i.e. `stream_name` for `streamName`), so it follows good ruby convention.
 
-Please ensure the following configuration value is specified:
+Please ensure the following configuration values are specified:
 - **stream_name** : the target kinesis queue name
 - **application_name** : it is not required if the environment variable **APP_NAME** is set.
 
@@ -107,7 +107,7 @@ Please ensure the following configuration value is specified:
 Record Processors
 -----------------
 
-It is also required to specify the record processor for the `Kcl::Executor`, i.e.
+Please also specify the record processor for the `Kcl::Executor`, i.e.
 
 ```ruby
 Kcl::Executor.new do |executor|
@@ -124,7 +124,7 @@ The reason that why `SimpleProcessor.new` is initialised in the block instead of
 executor.record_processor SimpleProcessor.new
 ```
 
-is the processor should only get instantiated when invoked by the consumer client java process, and not in the first `<client_script> exec` call.
+is that processor should only get instantiated when invoked by the consumer client java process, and not in the first `<client_script> exec` call.
 
 
 ### Kcl::RecordProcessor
@@ -155,7 +155,7 @@ class YourProcessor
 end
 ```
 
-Please note, with the basic `Kcl::RecordProcessor`, it is the clients' responsibility to manage the checkpoints. The client are free to decide how often the checkpoint should be made through doing:
+Please note, with the basic `Kcl::RecordProcessor`, it is the client's responsibility to manage the checkpoints. The client are free to decide how often the checkpoint should be made through doing:
 
 ```ruby
 def process_records records, checkpointer
@@ -165,7 +165,7 @@ end
 
 ### Kcl::AdvancedRecordProcessor
 
-The AdvancedRecordProcessor class take cares the basic checkpoints logic, and the clients only required to implement the `process_record` method, for example:
+The AdvancedRecordProcessor class take cares the basic checkpoint logic, and the clients only required to implement the `process_record` method, for example:
 
 ```ruby
 require 'kcl'

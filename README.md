@@ -213,8 +213,8 @@ rake spec
 
 Future Roadmap
 --------------
-- dependency management for the Amazon kinesis client jar files by utilising [ruby-maven](https://github.com/mkristian/ruby-maven) (potentially).
-
+- Advanced batch record processing
+- Spec tests on the Kcl::Process to enable future refactoring
 
 Contributing
 ------------

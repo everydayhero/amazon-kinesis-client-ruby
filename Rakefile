@@ -10,7 +10,9 @@ end
 
 RuboCop::RakeTask.new
 
-Gem::Tasks::Build::Gem.new do |build|
+task :download_jars do
   mvn = Maven::Ruby::Maven.new
   mvn.exec 'generate-sources', '-f', 'pom.xml'
 end
+
+task build: :download_jars

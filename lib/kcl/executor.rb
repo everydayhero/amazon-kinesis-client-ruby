@@ -36,7 +36,7 @@ module Kcl
     def extra_class_path *extra_class_path
       @extra_class_path = extra_class_path unless extra_class_path.empty?
 
-      @extra_class_path || {}
+      @extra_class_path || []
     end
 
     def run argv

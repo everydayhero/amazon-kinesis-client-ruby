@@ -1,16 +1,22 @@
 module Kcl
   class ExecutorCommandBuilder
-    def initialize properties_file_path
+    def initialize properties_file_path, system_properties: {},
+                                         extra_class_path: []
       @properties_file_path = properties_file_path
+      @system_properties = system_properties
+      @extra_class_path = extra_class_path
     end
 
     def build
-      [java, log4j_config, '-cp', class_path, client_class, properties_file]
+      [
+        java, system_property_options, '-cp', class_path,
+        client_class, properties_file
+      ].flatten
     end
 
     private
 
-    attr_reader :properties_file_path
+    attr_reader :properties_file_path, :extra_class_path, :system_properties
 
     def java
       command = ENV.fetch('PATH_TO_JAVA', `which java`).strip
@@ -24,7 +30,9 @@ module Kcl
     end
 
     def class_path
-      (Dir["#{jar_dir}/*.jar"] << properties_file_dir).join ':'
+      (
+        Dir["#{jar_dir}/*.jar"].concat(extra_class_path) << properties_file_dir
+      ).join ':'
     end
 
     def properties_file
@@ -35,10 +43,10 @@ module Kcl
       @properties_file_dir ||= File.dirname properties_file_path
     end
 
-    def log4j_config
-      config_file = "#{jar_dir}/log4j.properties"
-
-      "-Dlog4j.configuration=file:#{config_file}"
+    def system_property_options
+      @system_property_options ||= system_properties.map do |key, value|
+        "-D#{key}=#{value}"
+      end
     end
 
     def jar_dir

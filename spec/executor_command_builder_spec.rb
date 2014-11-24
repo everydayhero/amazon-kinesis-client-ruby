@@ -58,5 +58,32 @@ describe Kcl::ExecutorCommandBuilder do
 
       it { expect(properties_file).to eq File.basename(properties_file_path) }
     end
+
+    context 'With system properties' do
+      let(:builder) {
+        system_properties = {
+          'log4j.configuration' => 'log4j.properties',
+          option2: 'test'
+        }
+
+        Kcl::ExecutorCommandBuilder.new properties_file_path,
+                                        system_properties: system_properties
+      }
+
+      it { expect(command).to include '-Dlog4j.configuration=log4j.properties' }
+
+      it { expect(command).to include '-Doption2=test' }
+    end
+
+    context 'With extra_class_path' do
+      let(:classpath) { command[2] }
+
+      let(:builder) {
+        Kcl::ExecutorCommandBuilder.new properties_file_path,
+                                        extra_class_path: ['test.jar']
+      }
+
+      it { expect(classpath).to include 'test.jar' }
+    end
   end
 end

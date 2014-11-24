@@ -5,7 +5,7 @@ module Kcl
     end
 
     def build
-      [java, '-cp', class_path, client_class, properties_file]
+      [java, log4j_config, '-cp', class_path, client_class, properties_file]
     end
 
     private
@@ -24,8 +24,6 @@ module Kcl
     end
 
     def class_path
-      jar_dir = File.expand_path '../../jars', __FILE__
-
       (Dir["#{jar_dir}/*.jar"] << properties_file_dir).join ':'
     end
 
@@ -35,6 +33,16 @@ module Kcl
 
     def properties_file_dir
       @properties_file_dir ||= File.dirname properties_file_path
+    end
+
+    def log4j_config
+      config_file = "#{jar_dir}/log4j.properties"
+
+      "-Dlog4j.configuration=file:#{config_file}"
+    end
+
+    def jar_dir
+      @jar_dir ||= File.expand_path '../../jars', __FILE__
     end
   end
 end

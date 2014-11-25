@@ -1,7 +1,6 @@
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
-require 'rubygems/tasks'
 require 'maven/ruby/maven'
 
 RSpec::Core::RakeTask.new :spec do |spec|

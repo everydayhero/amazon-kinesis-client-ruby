@@ -27,6 +27,18 @@ module Kcl
         end
     end
 
+    def system_properties system_properties = nil
+      @system_properties = system_properties if system_properties
+
+      @system_properties || {}
+    end
+
+    def extra_class_path *extra_class_path
+      @extra_class_path = extra_class_path unless extra_class_path.empty?
+
+      @extra_class_path || []
+    end
+
     def run argv
       if argv[0] == 'exec'
         run_exec
@@ -40,7 +52,11 @@ module Kcl
     attr_reader :record_processor_callback, :configuration
 
     def run_exec
-      command = ExecutorCommandBuilder.new(config_properties_path).build
+      command = ExecutorCommandBuilder.new(
+        config_properties_path,
+        system_properties: system_properties,
+        extra_class_path: extra_class_path
+      ).build
       LOG.info "execute command:\n#{command.join ' '}"
 
       system(*command)

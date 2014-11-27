@@ -1,0 +1,17 @@
+build_image: shippableimages/ubuntu1404_ruby
+language: ruby
+rvm:
+  - 2.1.2
+before_install:
+  - source ~/.rvm/scripts/rvm
+  - rvm install $SHIPPABLE_RUBY --verify-downloads 1
+  - source ~/.bashrc && ~/.rvm/scripts/rvm && rvm use $SHIPPABLE_RUBY
+
+install:
+  - bundle install
+  - bundle exec rake install
+
+script:
+  - bundle exec rake spec
+
+cache: true

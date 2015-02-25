@@ -137,7 +137,7 @@ require 'kcl'
 class YourProcessor
   include Kcl::RecordProcessor
 
-  def init shared_id
+  def init shard_id
     # Called once by a KCLProcess before any calls to process_records
   end
 

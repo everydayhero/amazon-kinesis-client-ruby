@@ -1,12 +1,11 @@
 require 'base64'
 require 'logger'
+require 'aws/kclrb'
 
 module Kcl
   class AdvancedRecordProcessor
     include RecordProcessor
-
-    LOG = Logger.new STDOUT
-    ERR_LOG = Logger.new STDERR
+    LOG = Logger.new STDERR
 
     DEFAULT_SLEEP_SECONDS = 5
     DEFAULT_CHECKPOINT_RETRIES = 5
@@ -22,22 +21,22 @@ module Kcl
 
     def process_record _record; end
 
-    def init _shared_id
+    def init shard_id
+      LOG.info "Start consumming at shard: #{shard_id}"
       self.largest_seq = nil
       self.last_checkpoint_time = Time.now
     end
 
     def process_records records, checkpointer
-      records.each do |record|
-        handle_record record
-      end
-
-      if Time.now - last_checkpoint_time > checkpoint_freq_seconds
+      records.each { |record| handle_record record }
+    rescue => error
+      LOG.error "Encountered an exception while processing records. Exception was #{error}"
+      force_checkpoint = true
+    ensure
+      if (Time.now - last_checkpoint_time > checkpoint_freq_seconds) || force_checkpoint
         checkpoint checkpointer
         self.last_checkpoint_time = Time.now
       end
-    rescue => error
-      ERR_LOG.error "Encountered an exception while processing records. Exception was #{error}\n"
     end
 
     def shutdown checkpointer, reason
@@ -79,24 +78,24 @@ module Kcl
       checkpointer.checkpoint seq
 
       true
-    rescue CheckpointError => checkpoint_error
+    rescue Aws::KCLrb::CheckpointError => checkpoint_error
       case checkpoint_error.to_s
       when 'ShutdownException'
         LOG.info 'Encountered shutdown execption, skipping checkpoint'
         true
       when 'ThrottlingException'
         if checkpoint_retries - 1 == try_count
-          ERR_LOG.error "Failed to checkpoint after #{try_count} attempts, giving up.\n"
+          LOG.error "Failed to checkpoint after #{try_count} attempts, giving up."
           true
         else
           LOG.info "Was throttled while checkpointing, will attempt again in #{sleep_seconds} seconds"
           false
         end
       when 'InvalidStateException'
-        ERR_LOG.error "MultiLangDaemon reported an invalid state while checkpointing.\n"
+        LOG.error "MultiLangDaemon reported an invalid state while checkpointing."
         false
       else
-        ERR_LOG.error "Encountered an error while checkpointing, error was #{checkpoint_error}.\n"
+        LOG.error "Encountered an error while checkpointing, error was #{checkpoint_error}."
         false
       end
     end

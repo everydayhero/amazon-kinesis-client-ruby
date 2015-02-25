@@ -3,7 +3,7 @@ require 'forwardable'
 
 module Kcl
   module RecordProcessor
-    def init _shared_id; end
+    def init _shard_id; end
 
     def process_records _records, _checkpointer; end
 

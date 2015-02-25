@@ -21,7 +21,7 @@ module Kcl
 
     def process_record _record; end
 
-    def init shared_id
+    def init shard_id
       LOG.info "Start consumming at shard: #{shard_id}"
       self.largest_seq = nil
       self.last_checkpoint_time = Time.now

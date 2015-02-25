@@ -1,5 +1,4 @@
 require 'aws/kclrb'
-require 'forwardable'
 
 module Kcl
   module RecordProcessor
@@ -16,17 +15,25 @@ module Kcl
     end
 
     class RecordProcessorAdapter < Aws::KCLrb::RecordProcessorBase
-      extend Forwardable
-
-      def_delegator :@record_processor, :process_records, :shutdown
-
       def initialize record_processor
         @record_processor = record_processor
       end
 
       def init_processor shard_id
-        @record_processor.init shard_id
+        record_processor.init shard_id
       end
+
+      def shutdown checkpointer, reason
+        record_processor.shutdown checkpointer, reason
+      end
+
+      def process_records records, checkpointer
+        record_processor.process_records records, checkpointer
+      end
+
+      private
+
+      attr_reader :record_processor
     end
   end
 end

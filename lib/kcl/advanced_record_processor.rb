@@ -24,7 +24,8 @@ module Kcl
     def init shard_id
       LOG.info "Start consumming at shard: #{shard_id}"
       self.largest_seq = nil
-      self.last_checkpoint_time = Time.now
+      # So that first records through would update the checkpoint
+      self.last_checkpoint_time = Time.at(0)
     end
 
     def process_records records, checkpointer
